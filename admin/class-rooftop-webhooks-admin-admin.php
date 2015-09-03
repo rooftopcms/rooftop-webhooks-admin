@@ -100,4 +100,26 @@ class Rooftop_Webhooks_Admin_Admin {
 
 	}
 
+    public function webhook_menu_links() {
+        $rooftop_api_menu_slug = "rooftop-api-authentication-overview";
+        add_submenu_page($rooftop_api_menu_slug, "Webhooks", "Webhooks", "manage_options", $this->plugin_name."-overview", function() {
+            $this->webhooks_admin_form();
+        });
+    }
+
+    public function webhooks_admin_form() {
+        $current_endpoints = $this->get_api_endpoints();
+
+        require_once plugin_dir_path( __FILE__ ) . 'partials/rooftop-webhooks-admin-form.php';
+    }
+
+    private function get_api_endpoints() {
+        $endpoints = array();
+        $endpoints[] = array('name' => "Some endpoint", 'uri' => "http://woedowe.ngrok.com:1234");
+
+        return $endpoints;
+    }
+    private function set_api_endpoints($endpoints) {
+        return true;
+    }
 }
