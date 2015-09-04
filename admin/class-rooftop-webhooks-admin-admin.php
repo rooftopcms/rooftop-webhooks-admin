@@ -21,6 +21,10 @@
  * @author     Error <info@errorstudio.co.uk>
  */
 
+if(!class_exists('Redisent')){
+    require_once VENDOR_PATH . 'chrisboulton/php-resque/lib/Redisent/Redisent.php';
+}
+
 class Rooftop_Webhooks_Admin_Admin {
 
 	/**
@@ -41,6 +45,8 @@ class Rooftop_Webhooks_Admin_Admin {
 	 */
 	private $version;
 
+    private $redis_key;
+
 	/**
 	 * Initialize the class and set its properties.
 	 *
@@ -53,7 +59,8 @@ class Rooftop_Webhooks_Admin_Admin {
 		$this->plugin_name = $plugin_name;
 		$this->version = $version;
 
-        $this->redis = new Redisent('localhost');
+        $this->redis_key = 'site_id:'.get_current_blog_id().':webhooks';
+        $this->redis = new Predis\Client();
 	}
 
 	/**
@@ -105,8 +112,7 @@ class Rooftop_Webhooks_Admin_Admin {
     public function webhook_menu_links() {
         $rooftop_api_menu_slug = "rooftop-api-authentication-overview";
         add_submenu_page($rooftop_api_menu_slug, "Webhooks", "Webhooks", "manage_options", $this->plugin_name."-overview", function() {
-            $method = $_SERVER['REQUEST_METHOD'];
-
+            $method = ($_SERVER['REQUEST_METHOD'] && $_POST && array_key_exists('id', $_POST)) ? "PATCH" : $_SERVER['REQUEST_METHOD'];
 
             switch($method) {
                 case 'GET':
@@ -119,7 +125,7 @@ class Rooftop_Webhooks_Admin_Admin {
                 case 'POST':
                     $this->webhook_create();
                     break;
-                case 'PUT':
+                case 'PATCH':
                     $this->webhooks_update();
                     break;
                 case 'DELETE':
@@ -130,29 +136,104 @@ class Rooftop_Webhooks_Admin_Admin {
     }
 
     public function webhooks_admin_form() {
-        $webhok_endpoints = $this->get_api_endpoints();
+        $webhook_endpoints = $this->get_api_endpoints();
 
         require_once plugin_dir_path( __FILE__ ) . 'partials/rooftop-webhooks-admin-form.php';
     }
+
     public function webhooks_view_form() {
-        $endpoint = array('id' => 1, 'webhook_url' => "http://woedowe.ngrok.com:1234", 'webhook_mode' => 'test');
-        require_once plugin_dir_path( __FILE__ ) . 'partials/rooftop-webhooks-view-form.php';
+        $endpoint = $this->get_api_endpoint_with_id($_GET['id']);
+
+        if($endpoint){
+            require_once plugin_dir_path( __FILE__ ) . 'partials/rooftop-webhooks-view-form.php';
+        }else {
+            new WP_Error(404, "Endpoint not found");
+            return;
+        }
     }
+
     private function webhook_create(){
+        $endpoint = (object)array('url' => $_POST['url'], 'environment' => $_POST['environment']);
+        if($this->validate($endpoint)) {
+            $endpoint->id = $this->redis->incr($this->redis_key.':id');
+
+            $all_endpoints = $this->get_api_endpoints();
+            $all_endpoints[] = $endpoint;
+            $this->set_api_endpoints($all_endpoints);
+
+            exit("New endpoint added");
+        }else {
+            echo "New endpoint not valid";
+            require_once plugin_dir_path( __FILE__ ) . 'partials/rooftop-webhooks-view-form.php';
+        }
     }
+
     private function webhooks_update(){
+        $all_endpoints = $this->get_api_endpoints();
+        $endpoint = $this->get_api_endpoint_with_id($_POST['id']);
+
+        if($endpoint) {
+            $index = array_search($endpoint, $all_endpoints);
+            $endpoint->url = $_POST['url'];
+            $endpoint->environment = $_POST['environment'];
+
+            if($this->validate($endpoint)){
+                $all_endpoints[$index] = $endpoint;
+                $this->set_api_endpoints($all_endpoints);
+            }else {
+                return new WP_Error(500, "Could not validate webhook");
+                exit;
+            }
+        }
     }
-    private function webhook_delete(){
+
+    private function webhook_delete() {
+        $all_endpoints = $this->get_api_endpoints();
+        $endpoint = $this->get_api_endpoint_with_id($_POST['id']);
+
+        if($endpoint) {
+            $index = array_search($endpoint, $all_endpoints);
+            unset($all_endpoints[$index]);
+            $this->set_api_endpoints($all_endpoints);
+        }
+    }
+
+    private function get_api_endpoint_with_id($id) {
+        $all_endpoints = $this->get_api_endpoints();
+        $endpoints = array_filter($all_endpoints, function($endpoint) use($id){
+            return $endpoint->id == $id;
+        });
+
+        if(count($endpoints)==1){
+            return array_values($endpoints)[0];
+        }else {
+            return false;
+        }
+    }
+
+    private function validate($endpoint) {
+        // fixme: validate the environment, url presence and that the url doesnt resolve to a local address
+        $results = array();
+        $results[] = strlen($endpoint->environment)>0;
+        $results[] = strlen($endpoint->url)>0;
+
+        if(count(array_unique($results))==1 && $results[0]==true){
+            return true;
+        }else {
+            return false;
+        }
+    }
+
+    private function set_api_endpoints($endpoints) {
+        $this->redis->set($this->redis_key, json_encode($endpoints));
     }
 
     private function get_api_endpoints() {
-        $endpoints = array();
-        $endpoints[] = array('id' => 1,'webhook_url' => "http://woedowe.ngrok.com:1234", 'webhook_mode' => 'test');
-        $endpoints[] = array('id' => 2,'webhook_url' => "http://username:password@woedowe.ngrok.com", 'webhook_mode' => 'live');
+        $endpoints = json_decode($this->redis->get($this->redis_key));
+        if(!is_array($endpoints)) {
+            return array();
+        }
 
         return $endpoints;
-    }
-    private function set_api_endpoints($endpoints) {
-        return true;
     }
 }

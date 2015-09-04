@@ -1,16 +1,16 @@
 <div class="wrap">
-    <?php if(count($webhok_endpoints)):?>
+    <?php if(count($webhook_endpoints)):?>
         <table class="wp-list-table widefat fixed striped pages">
             <thead>
             <tr>
                 <th>Mode</th>
-                <th width="90%">Endpoint</th>
+                <th width="90%">Environment</th>
             </tr>
             </thead>
-            <?php foreach($webhok_endpoints as $endpoint): ?>
+            <?php foreach($webhook_endpoints as $endpoint): ?>
                 <tr>
-                    <td><?php echo $endpoint['webhook_mode'];?></td>
-                    <td><a href="?page=rooftop-webhooks-admin-overview&id=1"><?php echo $endpoint['webhook_url'];?></a></td>
+                    <td><?php echo $endpoint->environment;?></td>
+                    <td><a href="?page=rooftop-webhooks-admin-overview&id=<?php echo $endpoint->id ?>"><?php echo $endpoint->url;?></a></td>
                 </tr>
             <?php endforeach;?>
         </table>
@@ -25,22 +25,22 @@
                     URL
                 </th>
                 <td>
-                    <input type="text" name="webhook_url" size="50" value="<?php defined('$new_webhook_url') ? $new_webhook_url : '' ?>"/>
+                    <input type="text" name="url" size="50" value="<?php defined('$new_webhook_url') ? $new_webhook_url : '' ?>"/>
                 </td>
             </tr>
 
             <tr>
                 <th scope="row">
-                    Mode
+                    Environment
                 </th>
                 <td>
                     <p>
                         <label for="webhook_mode_live">Live</label>
-                        <input name="webhook_mode" id="webhook_mode_live" value="Live" type="radio" checked />
+                        <input name="environment" id="webhook_mode_live" value="Live" type="radio" checked />
                     </p>
                     <p>
                         <label for="webhook_mode_staging">Staging</label>
-                        <input name="webhook_mode" id="webhook_mode_staging" value="Staging" type="radio" />
+                        <input name="environment" id="webhook_mode_staging" value="Staging" type="radio" />
                     </p>
                 </td>
             </tr>
