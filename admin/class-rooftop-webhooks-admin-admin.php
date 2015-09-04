@@ -20,6 +20,7 @@
  * @subpackage Rooftop_Webhooks_Admin/admin
  * @author     Error <info@errorstudio.co.uk>
  */
+
 class Rooftop_Webhooks_Admin_Admin {
 
 	/**
@@ -52,6 +53,7 @@ class Rooftop_Webhooks_Admin_Admin {
 		$this->plugin_name = $plugin_name;
 		$this->version = $version;
 
+        $this->redis = new Redisent('localhost');
 	}
 
 	/**
@@ -103,19 +105,50 @@ class Rooftop_Webhooks_Admin_Admin {
     public function webhook_menu_links() {
         $rooftop_api_menu_slug = "rooftop-api-authentication-overview";
         add_submenu_page($rooftop_api_menu_slug, "Webhooks", "Webhooks", "manage_options", $this->plugin_name."-overview", function() {
-            $this->webhooks_admin_form();
+            $method = $_SERVER['REQUEST_METHOD'];
+
+
+            switch($method) {
+                case 'GET':
+                    if(!array_key_exists('id', $_GET)){
+                        $this->webhooks_admin_form();
+                    }else {
+                        $this->webhooks_view_form();
+                    }
+                    break;
+                case 'POST':
+                    $this->webhook_create();
+                    break;
+                case 'PUT':
+                    $this->webhooks_update();
+                    break;
+                case 'DELETE':
+                    $this->webhook_delete();
+                    break;
+            }
         });
     }
 
     public function webhooks_admin_form() {
-        $current_endpoints = $this->get_api_endpoints();
+        $webhok_endpoints = $this->get_api_endpoints();
 
         require_once plugin_dir_path( __FILE__ ) . 'partials/rooftop-webhooks-admin-form.php';
+    }
+    public function webhooks_view_form() {
+        $endpoint = array('id' => 1, 'webhook_url' => "http://woedowe.ngrok.com:1234", 'webhook_mode' => 'test');
+        require_once plugin_dir_path( __FILE__ ) . 'partials/rooftop-webhooks-view-form.php';
+    }
+    private function webhook_create(){
+    }
+    private function webhooks_update(){
+    }
+    private function webhook_delete(){
     }
 
     private function get_api_endpoints() {
         $endpoints = array();
-        $endpoints[] = array('name' => "Some endpoint", 'uri' => "http://woedowe.ngrok.com:1234");
+        $endpoints[] = array('id' => 1,'webhook_url' => "http://woedowe.ngrok.com:1234", 'webhook_mode' => 'test');
+        $endpoints[] = array('id' => 2,'webhook_url' => "http://username:password@woedowe.ngrok.com", 'webhook_mode' => 'live');
 
         return $endpoints;
     }
