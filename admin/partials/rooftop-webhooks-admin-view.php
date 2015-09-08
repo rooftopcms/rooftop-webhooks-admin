@@ -20,11 +20,11 @@
                 <td>
                     <p>
                         <label for="webhook_mode_live">Live</label>
-                        <input name="environment" id="webhook_mode_live" value="Live" type="radio" checked />
+                        <input name="environment" id="webhook_mode_live" value="live" type="radio" <?php echo $endpoint->environment=="live" ? 'checked' : '' ?> />
                     </p>
                     <p>
                         <label for="webhook_mode_staging">Staging</label>
-                        <input name="environment" id="webhook_mode_staging" value="Staging" type="radio" />
+                        <input name="environment" id="webhook_mode_staging" value="staging" type="radio" <?php echo $endpoint->environment=="staging" ? 'checked' : '' ?> />
                     </p>
                 </td>
             </tr>

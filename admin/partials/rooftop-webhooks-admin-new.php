@@ -1,22 +1,5 @@
 <div class="wrap">
-    <?php if(count($webhook_endpoints)):?>
-        <table class="wp-list-table widefat fixed striped pages">
-            <thead>
-            <tr>
-                <th>Mode</th>
-                <th width="90%">Environment</th>
-            </tr>
-            </thead>
-            <?php foreach($webhook_endpoints as $endpoint): ?>
-                <tr>
-                    <td><?php echo $endpoint->environment;?></td>
-                    <td><a href="?page=rooftop-webhooks-admin-overview&id=<?php echo $endpoint->id ?>"><?php echo $endpoint->url;?></a></td>
-                </tr>
-            <?php endforeach;?>
-        </table>
-    <?php endif; ?>
-
-    <h1>Add new API key</h1>
+    <h1>Add new webhook</h1>
 
     <form action="" method="post">
         <table class="form-table">
@@ -36,11 +19,11 @@
                 <td>
                     <p>
                         <label for="webhook_mode_live">Live</label>
-                        <input name="environment" id="webhook_mode_live" value="Live" type="radio" checked />
+                        <input name="environment" id="webhook_mode_live" value="live" type="radio" checked />
                     </p>
                     <p>
                         <label for="webhook_mode_staging">Staging</label>
-                        <input name="environment" id="webhook_mode_staging" value="Staging" type="radio" />
+                        <input name="environment" id="webhook_mode_staging" value="staging" type="radio" />
                     </p>
                 </td>
             </tr>

@@ -116,9 +116,11 @@ class Rooftop_Webhooks_Admin_Admin {
 
             switch($method) {
                 case 'GET':
-                    if(!array_key_exists('id', $_GET)){
+                    if(!array_key_exists('id', $_GET) && !array_key_exists('new', $_GET)){
+                        $this->webhooks_admin_index();
+                    }elseif(array_key_exists('new', $_GET)){
                         $this->webhooks_admin_form();
-                    }else {
+                    }elseif(array_key_exists('id', $_GET)) {
                         $this->webhooks_view_form();
                     }
                     break;
@@ -135,17 +137,21 @@ class Rooftop_Webhooks_Admin_Admin {
         });
     }
 
-    public function webhooks_admin_form() {
+    public function webhooks_admin_index() {
         $webhook_endpoints = $this->get_api_endpoints();
 
-        require_once plugin_dir_path( __FILE__ ) . 'partials/rooftop-webhooks-admin-form.php';
+        require_once plugin_dir_path( __FILE__ ) . 'partials/rooftop-webhooks-admin-index.php';
+    }
+
+    public function webhooks_admin_form() {
+        require_once plugin_dir_path( __FILE__ ) . 'partials/rooftop-webhooks-admin-new.php';
     }
 
     public function webhooks_view_form() {
         $endpoint = $this->get_api_endpoint_with_id($_GET['id']);
 
         if($endpoint){
-            require_once plugin_dir_path( __FILE__ ) . 'partials/rooftop-webhooks-view-form.php';
+            require_once plugin_dir_path( __FILE__ ) . 'partials/rooftop-webhooks-admin-view.php';
         }else {
             new WP_Error(404, "Endpoint not found");
             return;
@@ -180,6 +186,9 @@ class Rooftop_Webhooks_Admin_Admin {
             if($this->validate($endpoint)){
                 $all_endpoints[$index] = $endpoint;
                 $this->set_api_endpoints($all_endpoints);
+
+                echo "Webhook updated";
+                $this->webhooks_admin_index();
             }else {
                 return new WP_Error(500, "Could not validate webhook");
                 exit;
