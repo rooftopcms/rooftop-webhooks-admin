@@ -151,7 +151,7 @@ class Rooftop_Webhooks_Admin_Admin {
         $endpoint = $this->get_api_endpoint_with_id($_GET['id']);
 
         if($endpoint){
-            require_once plugin_dir_path( __FILE__ ) . 'partials/rooftop-webhooks-admin-view.php';
+            require_once plugin_dir_path( __FILE__ ) . 'partials/rooftop-webhooks-admin-show.php';
         }else {
             new WP_Error(404, "Endpoint not found");
             return;
