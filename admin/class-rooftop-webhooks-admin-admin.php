@@ -143,17 +143,17 @@ class Rooftop_Webhooks_Admin_Admin {
         });
     }
 
-    public function webhooks_admin_index() {
+    private function webhooks_admin_index() {
         $webhook_endpoints = $this->get_api_endpoints();
 
         require_once plugin_dir_path( __FILE__ ) . 'partials/rooftop-webhooks-admin-index.php';
     }
 
-    public function webhooks_admin_form() {
+    private function webhooks_admin_form() {
         require_once plugin_dir_path( __FILE__ ) . 'partials/rooftop-webhooks-admin-new.php';
     }
 
-    public function webhooks_view_form() {
+    private function webhooks_view_form() {
         $endpoint = $this->get_api_endpoint_with_id($_GET['id']);
 
         if($endpoint){
