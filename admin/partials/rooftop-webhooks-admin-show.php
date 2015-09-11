@@ -39,7 +39,7 @@
         <input name="method" value="delete" type="hidden"/>
         <input name="id" value="<?php echo $endpoint->id;?>" type="hidden"/>
         <p class="submit">
-            <input value="Delete" class="button" type="submit"/>
+            <input value="Delete" class="button" type="submit" onclick="return confirm('Are you sure?')"/>
         </p>
     </form>
 

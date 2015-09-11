@@ -173,11 +173,11 @@ class Rooftop_Webhooks_Admin_Admin {
             $all_endpoints[] = $endpoint;
             $this->set_api_endpoints($all_endpoints);
 
-            exit("New endpoint added");
+            echo "<div class='wrap'>Webhook updated</div>";
             $this->webhooks_admin_index();
         }else {
-            echo "New endpoint not valid";
-            require_once plugin_dir_path( __FILE__ ) . 'partials/rooftop-webhooks-view-form.php';
+            echo "<div class='wrap'>New endpoint not valid</div>";
+            require_once plugin_dir_path( __FILE__ ) . 'partials/rooftop-webhooks-admin-new.php';
         }
     }
 
@@ -194,7 +194,7 @@ class Rooftop_Webhooks_Admin_Admin {
                 $all_endpoints[$index] = $endpoint;
                 $this->set_api_endpoints($all_endpoints);
 
-                echo "Webhook updated";
+                echo "<div class='wrap'>Webhook updated</div>";
                 $this->webhooks_admin_index();
             }else {
                 return new WP_Error(500, "Could not validate webhook");
@@ -233,8 +233,17 @@ class Rooftop_Webhooks_Admin_Admin {
     private function validate($endpoint) {
         // fixme: validate the environment, url presence and that the url doesnt resolve to a local address
         $results = array();
-        $results[] = strlen($endpoint->environment)>0;
-        $results[] = strlen($endpoint->url)>0;
+
+        $endpoints = $this->get_api_endpoints();
+
+        $results[] = strlen($endpoint->environment)>0; // user specified an env
+        $results[] = strlen($endpoint->url)>0; // url was given
+
+        $urls = array_map(function($e){
+            return $e->url;
+        }, $endpoints);
+
+        $results[] = in_array($endpoint->url, $urls);
 
         if(count(array_unique($results))==1 && $results[0]==true){
             return true;

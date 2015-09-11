@@ -8,7 +8,11 @@
                     URL
                 </th>
                 <td>
-                    <input type="text" name="url" size="50" value="<?php defined('$new_webhook_url') ? $new_webhook_url : '' ?>"/>
+                    <?php
+                        $url = isset($endpoint) ? $endpoint->url : '';
+                    ?>
+
+                    <input type="text" name="url" size="50" value="<?php echo $url ?>"/>
                 </td>
             </tr>
 
