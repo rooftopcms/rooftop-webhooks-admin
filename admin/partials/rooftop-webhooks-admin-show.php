@@ -34,4 +34,13 @@
             <input type="submit" value="Save" class="button button-primary" />
         </p>
     </form>
+
+    <form action="?page=rooftop-webhooks-admin-overview" method="POST" id="webhook">
+        <input name="method" value="delete" type="hidden"/>
+        <input name="id" value="<?php echo $endpoint->id;?>" type="hidden"/>
+        <p class="submit">
+            <input value="Delete" class="button" type="submit"/>
+        </p>
+    </form>
+
 </div>

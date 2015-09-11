@@ -112,7 +112,13 @@ class Rooftop_Webhooks_Admin_Admin {
     public function webhook_menu_links() {
         $rooftop_api_menu_slug = "rooftop-api-authentication-overview";
         add_submenu_page($rooftop_api_menu_slug, "Webhooks", "Webhooks", "manage_options", $this->plugin_name."-overview", function() {
-            $method = ($_SERVER['REQUEST_METHOD'] && $_POST && array_key_exists('id', $_POST)) ? "PATCH" : $_SERVER['REQUEST_METHOD'];
+            if($_POST && array_key_exists('method', $_POST)) {
+                $method = strtoupper($_POST['method']);
+            }elseif($_POST && array_key_exists('id', $_POST)){
+                $method = 'PATCH';
+            }else {
+                $method = $_SERVER['REQUEST_METHOD'];
+            }
 
             switch($method) {
                 case 'GET':
@@ -168,6 +174,7 @@ class Rooftop_Webhooks_Admin_Admin {
             $this->set_api_endpoints($all_endpoints);
 
             exit("New endpoint added");
+            $this->webhooks_admin_index();
         }else {
             echo "New endpoint not valid";
             require_once plugin_dir_path( __FILE__ ) . 'partials/rooftop-webhooks-view-form.php';
@@ -204,6 +211,9 @@ class Rooftop_Webhooks_Admin_Admin {
             $index = array_search($endpoint, $all_endpoints);
             unset($all_endpoints[$index]);
             $this->set_api_endpoints($all_endpoints);
+
+            echo "Webhook deleted";
+            $this->webhooks_admin_index();
         }
     }
 
