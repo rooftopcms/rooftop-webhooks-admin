@@ -223,7 +223,7 @@ class Rooftop_Webhooks_Admin_Admin {
             return $endpoint->id == $id;
         });
 
-        if(count($endpoints)==1){
+        if(count($endpoints)==1) {
             return array_values($endpoints)[0];
         }else {
             return false;
@@ -245,7 +245,7 @@ class Rooftop_Webhooks_Admin_Admin {
 
         $results[] = !in_array($endpoint->url, $urls);
 
-        if(count(array_unique($results))==1 && $results[0]==true){
+        if(count(array_unique($results))==1 && $results[0]==true) {
             return true;
         }else {
             return false;
