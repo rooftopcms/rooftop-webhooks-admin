@@ -243,7 +243,7 @@ class Rooftop_Webhooks_Admin_Admin {
             return $e->url;
         }, $endpoints);
 
-        $results[] = in_array($endpoint->url, $urls);
+        $results[] = !in_array($endpoint->url, $urls);
 
         if(count(array_unique($results))==1 && $results[0]==true){
             return true;
