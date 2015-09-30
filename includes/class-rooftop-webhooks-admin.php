@@ -156,6 +156,8 @@ class Rooftop_Webhooks_Admin {
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts' );
 
         $this->loader->add_action('admin_menu', $plugin_admin, 'webhook_menu_links');
+
+        $this->loader->add_action('save_post', $plugin_admin, 'trigger_webhook');
 	}
 
 	/**

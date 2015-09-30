@@ -7,7 +7,7 @@
             <thead>
             <tr>
                 <th>Mode</th>
-                <th width="90%">Environment</th>
+                <th width="90%">URL</th>
             </tr>
             </thead>
             <?php foreach($webhook_endpoints as $endpoint): ?>

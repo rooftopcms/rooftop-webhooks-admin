@@ -109,9 +109,26 @@ class Rooftop_Webhooks_Admin_Admin {
 
 	}
 
+    public function trigger_webhook($post_id) {
+        $post = get_post($post_id);
+
+        $webhook_request_body = array(
+            'id' => $post_id,
+            'type' => $post->post_type,
+            'object' => $post
+        );
+
+        foreach($this->get_webhook_endpoints() as $endpoint) {
+            // fixme: push webhook request onto a queue
+        }
+    }
+
+    /*******
+     * Add the Webhooks admin interface
+     *******/
     public function webhook_menu_links() {
-        $rooftop_api_menu_slug = "rooftop-api-authentication-overview";
-        add_submenu_page($rooftop_api_menu_slug, "Webhooks", "Webhooks", "manage_options", $this->plugin_name."-overview", function() {
+        $rooftop_webhook_menu_slug = "rooftop-api-authentication-overview";
+        add_submenu_page($rooftop_webhook_menu_slug, "Webhooks", "Webhooks", "manage_options", $this->plugin_name."-overview", function() {
             if($_POST && array_key_exists('method', $_POST)) {
                 $method = strtoupper($_POST['method']);
             }elseif($_POST && array_key_exists('id', $_POST)){
@@ -144,7 +161,7 @@ class Rooftop_Webhooks_Admin_Admin {
     }
 
     private function webhooks_admin_index() {
-        $webhook_endpoints = $this->get_api_endpoints();
+        $webhook_endpoints = $this->get_webhook_endpoints();
 
         require_once plugin_dir_path( __FILE__ ) . 'partials/rooftop-webhooks-admin-index.php';
     }
@@ -154,7 +171,7 @@ class Rooftop_Webhooks_Admin_Admin {
     }
 
     private function webhooks_view_form() {
-        $endpoint = $this->get_api_endpoint_with_id($_GET['id']);
+        $endpoint = $this->get_webhook_endpoint_with_id($_GET['id']);
 
         if($endpoint){
             require_once plugin_dir_path( __FILE__ ) . 'partials/rooftop-webhooks-admin-show.php';
@@ -169,9 +186,9 @@ class Rooftop_Webhooks_Admin_Admin {
         if($this->validate($endpoint)) {
             $endpoint->id = $this->redis->incr($this->redis_key.':id');
 
-            $all_endpoints = $this->get_api_endpoints();
+            $all_endpoints = $this->get_webhook_endpoints();
             $all_endpoints[] = $endpoint;
-            $this->set_api_endpoints($all_endpoints);
+            $this->set_webhook_endpoints($all_endpoints);
 
             echo "<div class='wrap'>Webhook updated</div>";
             $this->webhooks_admin_index();
@@ -182,8 +199,8 @@ class Rooftop_Webhooks_Admin_Admin {
     }
 
     private function webhooks_update(){
-        $all_endpoints = $this->get_api_endpoints();
-        $endpoint = $this->get_api_endpoint_with_id($_POST['id']);
+        $all_endpoints = $this->get_webhook_endpoints();
+        $endpoint = $this->get_webhook_endpoint_with_id($_POST['id']);
 
         if($endpoint) {
             $index = array_search($endpoint, $all_endpoints);
@@ -192,7 +209,7 @@ class Rooftop_Webhooks_Admin_Admin {
 
             if($this->validate($endpoint)){
                 $all_endpoints[$index] = $endpoint;
-                $this->set_api_endpoints($all_endpoints);
+                $this->set_webhook_endpoints($all_endpoints);
 
                 echo "<div class='wrap'>Webhook updated</div>";
                 $this->webhooks_admin_index();
@@ -204,21 +221,21 @@ class Rooftop_Webhooks_Admin_Admin {
     }
 
     private function webhook_delete() {
-        $all_endpoints = $this->get_api_endpoints();
-        $endpoint = $this->get_api_endpoint_with_id($_POST['id']);
+        $all_endpoints = $this->get_webhook_endpoints();
+        $endpoint = $this->get_webhook_endpoint_with_id($_POST['id']);
 
         if($endpoint) {
             $index = array_search($endpoint, $all_endpoints);
             unset($all_endpoints[$index]);
-            $this->set_api_endpoints($all_endpoints);
+            $this->set_webhook_endpoints($all_endpoints);
 
             echo "Webhook deleted";
             $this->webhooks_admin_index();
         }
     }
 
-    private function get_api_endpoint_with_id($id) {
-        $all_endpoints = $this->get_api_endpoints();
+    private function get_webhook_endpoint_with_id($id) {
+        $all_endpoints = $this->get_webhook_endpoints();
         $endpoints = array_filter($all_endpoints, function($endpoint) use($id){
             return $endpoint->id == $id;
         });
@@ -234,7 +251,7 @@ class Rooftop_Webhooks_Admin_Admin {
         // fixme: validate the environment, url presence and that the url doesnt resolve to a local address
         $results = array();
 
-        $endpoints = $this->get_api_endpoints();
+        $endpoints = $this->get_webhook_endpoints();
 
         $results[] = strlen($endpoint->environment)>0; // user specified an env
         $results[] = strlen($endpoint->url)>0; // url was given
@@ -252,14 +269,20 @@ class Rooftop_Webhooks_Admin_Admin {
         }
     }
 
-    private function set_api_endpoints($endpoints) {
+    private function set_webhook_endpoints($endpoints) {
         $this->redis->set($this->redis_key, json_encode($endpoints));
     }
 
-    private function get_api_endpoints() {
+    private function get_webhook_endpoints($environment=null) {
         $endpoints = json_decode($this->redis->get($this->redis_key));
         if(!is_array($endpoints)) {
             return array();
+        }
+
+        if($environment){
+            $endpoints = array_filter($endpoints, function($e) use($environment) {
+                return $e->environment == $environment;
+            });
         }
 
         return $endpoints;
