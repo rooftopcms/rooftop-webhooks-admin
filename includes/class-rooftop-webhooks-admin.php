@@ -157,7 +157,8 @@ class Rooftop_Webhooks_Admin {
 
         $this->loader->add_action('admin_menu', $plugin_admin, 'webhook_menu_links');
 
-        $this->loader->add_action('save_post', $plugin_admin, 'trigger_webhook');
+        $this->loader->add_action('save_post', $plugin_admin, 'trigger_webhook_save');
+        $this->loader->add_action('delete_post', $plugin_admin, 'trigger_webhook_delete');
 	}
 
 	/**

@@ -109,15 +109,38 @@ class Rooftop_Webhooks_Admin_Admin {
 
 	}
 
-    public function trigger_webhook($post_id) {
+    public function trigger_webhook_save($post_id) {
         $post = get_post($post_id);
+
+        if(in_array($post->post_status, array('auto-draft', 'draft', 'inherit')) && $post->post_date == $post->post_modified) {
+            return;
+        }
 
         $webhook_request_body = array(
             'id' => $post_id,
             'type' => $post->post_type,
-            'object' => $post
+            'status' => $post->post_status
         );
 
+        $this->send_webhook_request($webhook_request_body);
+    }
+
+    public function trigger_webhook_delete($post_id) {
+        $post = get_post($post_id);
+
+        if(in_array($post->post_status, array('revision', 'inherit')) && $post->post_date == $post->post_modified) {
+            return;
+        }
+
+        $webhook_request_body = array(
+            'id' => $post_id,
+            'status' => 'deleted'
+        );
+
+        $this->send_webhook_request($webhook_request_body);
+    }
+
+    private function send_webhook_request($request_body) {
         foreach($this->get_webhook_endpoints() as $endpoint) {
             // fixme: push webhook request onto a queue
         }
@@ -131,7 +154,7 @@ class Rooftop_Webhooks_Admin_Admin {
         add_submenu_page($rooftop_webhook_menu_slug, "Webhooks", "Webhooks", "manage_options", $this->plugin_name."-overview", function() {
             if($_POST && array_key_exists('method', $_POST)) {
                 $method = strtoupper($_POST['method']);
-            }elseif($_POST && array_key_exists('id', $_POST)){
+            }elseif($_POST && array_key_exists('id', $_POST)) {
                 $method = 'PATCH';
             }else {
                 $method = $_SERVER['REQUEST_METHOD'];
