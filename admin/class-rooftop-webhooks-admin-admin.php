@@ -206,7 +206,8 @@ class Rooftop_Webhooks_Admin_Admin {
 
     private function webhook_create(){
         $endpoint = (object)array('url' => $_POST['url'], 'environment' => $_POST['environment']);
-        if($this->validate($endpoint)) {
+        $errors = null;
+        if($this->validate($endpoint, $errors)) {
             $endpoint->id = $this->redis->incr($this->redis_key.':id');
 
             $all_endpoints = $this->get_webhook_endpoints();
@@ -217,7 +218,10 @@ class Rooftop_Webhooks_Admin_Admin {
             $this->webhooks_admin_index();
         }else {
             echo "<div class='wrap'>New endpoint not valid</div>";
+            require_once plugin_dir_path( __FILE__ ) . 'partials/render-errors.php';
             require_once plugin_dir_path( __FILE__ ) . 'partials/rooftop-webhooks-admin-new.php';
+            return new WP_Error(500, "Could not validate webhook");
+            exit;
         }
     }
 
@@ -230,7 +234,8 @@ class Rooftop_Webhooks_Admin_Admin {
             $endpoint->url = $_POST['url'];
             $endpoint->environment = $_POST['environment'];
 
-            if($this->validate($endpoint)){
+            $errors = [];
+            if($this->validate($endpoint, $errors)){
                 $all_endpoints[$index] = $endpoint;
                 $this->set_webhook_endpoints($all_endpoints);
 
@@ -238,7 +243,8 @@ class Rooftop_Webhooks_Admin_Admin {
                 $this->webhooks_admin_index();
             }else {
                 echo "<div class='wrap'>Endpoint not saved</div>";
-                require_once plugin_dir_path( __FILE__ ) . 'partials/rooftop-webhooks-admin-new.php';
+                require_once plugin_dir_path( __FILE__ ) . 'partials/render-errors.php';
+                require_once plugin_dir_path( __FILE__ ) . 'partials/rooftop-webhooks-admin-show.php';
                 return new WP_Error(500, "Could not validate webhook");
                 exit;
             }
@@ -272,29 +278,43 @@ class Rooftop_Webhooks_Admin_Admin {
         }
     }
 
-    private function validate($endpoint) {
+    private function validate($endpoint, &$errors = null) {
         // fixme: validate the environment, url presence and that the url doesnt resolve to a local address
         $results = array();
 
         $endpoints = $this->get_webhook_endpoints();
 
-        $results[] = strlen($endpoint->environment)>0; // user specified an env
-        $results[] = strlen($endpoint->url)>0; // url was given
+        // validate the env
+        $results = [];
+        $results['url'] = [];
+        $results['environment'] = [];
+        if(!strlen($endpoint->environment)>0){
+            $results['envirnment'][] = "No environment specified";
+        }
+        if(!strlen($endpoint->url)>0){
+            $results['url'][] = "No URL given";
+        }
 
         $url = parse_url($endpoint->url);
-        $results[] = gethostbyname($url['host']) != "127.0.0.1";
+        if(gethostbyname($url['host']) == "127.0.0.1"){
+            $results['url'][] = "URL Resolves to localhost";
+        }
 
         $urls = array_map(function($e){
             return $e->url;
         }, $endpoints);
 
-        $results[] = !in_array($endpoint->url, $urls);
+        if(in_array($endpoint->url, $urls)){
+            $results['url'][] = "You've already added this enpoint";
+        }
 
-        if(count(array_unique($results))==1 && $results[0]==true) {
-            return true;
-        }else {
+        $validation_errors = array_filter(array_values($results));
+        if(count($validation_errors)){
+            $errors = array_filter($results);
             return false;
         }
+
+        return true;
     }
 
     private function set_webhook_endpoints($endpoints) {
