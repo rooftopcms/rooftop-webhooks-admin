@@ -237,6 +237,8 @@ class Rooftop_Webhooks_Admin_Admin {
                 echo "<div class='wrap'>Webhook updated</div>";
                 $this->webhooks_admin_index();
             }else {
+                echo "<div class='wrap'>Endpoint not saved</div>";
+                require_once plugin_dir_path( __FILE__ ) . 'partials/rooftop-webhooks-admin-new.php';
                 return new WP_Error(500, "Could not validate webhook");
                 exit;
             }
@@ -278,6 +280,9 @@ class Rooftop_Webhooks_Admin_Admin {
 
         $results[] = strlen($endpoint->environment)>0; // user specified an env
         $results[] = strlen($endpoint->url)>0; // url was given
+
+        $url = parse_url($endpoint->url);
+        $results[] = gethostbyname($url['host']) != "127.0.0.1";
 
         $urls = array_map(function($e){
             return $e->url;
