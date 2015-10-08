@@ -21,10 +21,6 @@
  * @author     Error <info@errorstudio.co.uk>
  */
 
-if(!class_exists('Redisent')){
-    require_once VENDOR_PATH . 'chrisboulton/php-resque/lib/Redisent/Redisent.php';
-}
-
 class Rooftop_Webhooks_Admin_Admin {
 
 	/**
@@ -142,7 +138,8 @@ class Rooftop_Webhooks_Admin_Admin {
 
     private function send_webhook_request($request_body) {
         foreach($this->get_webhook_endpoints() as $endpoint) {
-            // fixme: push webhook request onto a queue
+            $args = array('endpoint' => $endpoint, 'body' => $request_body);
+            Resque::push('PostSaved', $args);
         }
     }
 

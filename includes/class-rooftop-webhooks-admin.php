@@ -121,6 +121,11 @@ class Rooftop_Webhooks_Admin {
 
 		$this->loader = new Rooftop_Webhooks_Admin_Loader();
 
+        // require all job classes
+        $path = plugin_dir_path( dirname( __FILE__ ) ) . 'jobs/*.php';
+        foreach(glob($path) as $file) {
+            include $file;
+        }
 	}
 
 	/**
