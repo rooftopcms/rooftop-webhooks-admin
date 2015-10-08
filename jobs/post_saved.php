@@ -5,9 +5,9 @@ class PostSaved {
     public function tearDown() {
     }
 
-    public function perform($args) {
-        $url = $args['endpoint']['url'];
-        $body = $args['body'];
+    public function perform() {
+        $url = $this->args['endpoint']['url'];
+        $body = $this->args['body'];
 
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_POST, 1);
@@ -21,17 +21,18 @@ class PostSaved {
             // if this task is ok to retry, push it back onto a 'retry' queue
             // else this task has failed too many times
 
-            $attempts = array_key_exists('attempts', $body) ? $body['attempts']+=1 : 1;
-            $delay_in_minutes = $attempts*$attempts*$attempts;
-
-            if($attempts<3) {
-                $body['attempts'] = $attempts;
-                $args['body'] = $body;
-                error_log("\n\nRetrying in $delay_in_minutes minutes\n\n");
-                Resque::later(new \DateTime("+$delay_in_minutes mins"), 'PostSaved', $args, 'retry');
-            }else {
-                error_log("\n\nnot retrying\n\n");
-            }
+            error_log("Request failed - status $status");
+//            $attempts = array_key_exists('attempts', $body) ? $body['attempts']+=1 : 1;
+//            $delay_in_minutes = $attempts*$attempts*$attempts;
+//
+//            if($attempts<3) {
+//                $body['attempts'] = $attempts;
+//                $this->args['body'] = $body;
+//                error_log("\n\nRetrying in $delay_in_minutes minutes\n\n");
+//                Resque::later(new \DateTime("+$delay_in_minutes mins"), 'PostSaved', $this->args, 'retry');
+//            }else {
+//                error_log("\n\nnot retrying\n\n");
+//            }
         }
     }
 }

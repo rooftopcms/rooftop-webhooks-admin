@@ -139,7 +139,7 @@ class Rooftop_Webhooks_Admin_Admin {
     private function send_webhook_request($request_body) {
         foreach($this->get_webhook_endpoints() as $endpoint) {
             $args = array('endpoint' => $endpoint, 'body' => $request_body);
-            Resque::push('PostSaved', $args);
+            Resque::enqueue('default', 'PostSaved', $args);
         }
     }
 
@@ -233,7 +233,7 @@ class Rooftop_Webhooks_Admin_Admin {
             $endpoint->environment = $_POST['environment'];
 
             $errors = [];
-            if($this->validate($endpoint, $errors)){
+            if($this->validate($endpoint, 'update', $errors)){
                 $all_endpoints[$index] = $endpoint;
                 $this->set_webhook_endpoints($all_endpoints);
 
@@ -276,7 +276,7 @@ class Rooftop_Webhooks_Admin_Admin {
         }
     }
 
-    private function validate($endpoint, &$errors = null) {
+    private function validate($endpoint, $op = null, &$errors = null) {
         // fixme: validate the environment, url presence and that the url doesnt resolve to a local address
         $results = array();
 
@@ -302,7 +302,7 @@ class Rooftop_Webhooks_Admin_Admin {
             return $e->url;
         }, $endpoints);
 
-        if(in_array($endpoint->url, $urls)){
+        if(in_array($endpoint->url, $urls) && $op != 'update'){
             $results['url'][] = "You've already added this endpoint";
         }
 
