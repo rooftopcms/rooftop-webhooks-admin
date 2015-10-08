@@ -174,7 +174,8 @@ class Rooftop_Webhooks_Admin_Admin {
                     $this->webhooks_update();
                     break;
                 case 'DELETE':
-                    $this->webhook_delete();
+                    $id = $_POST['id'];
+                    $this->webhook_delete($id);
                     break;
             }
         });
@@ -248,14 +249,14 @@ class Rooftop_Webhooks_Admin_Admin {
         }
     }
 
-    private function webhook_delete() {
+    private function webhook_delete($id) {
         $all_endpoints = $this->get_webhook_endpoints();
-        $endpoint = $this->get_webhook_endpoint_with_id($_POST['id']);
+        $endpoint = $this->get_webhook_endpoint_with_id($id);
 
         if($endpoint) {
             $index = array_search($endpoint, $all_endpoints);
             unset($all_endpoints[$index]);
-            $this->set_webhook_endpoints($all_endpoints);
+            $this->set_webhook_endpoints(array_values($all_endpoints));
 
             echo "Webhook deleted";
             $this->webhooks_admin_index();
@@ -302,7 +303,7 @@ class Rooftop_Webhooks_Admin_Admin {
         }, $endpoints);
 
         if(in_array($endpoint->url, $urls)){
-            $results['url'][] = "You've already added this enpoint";
+            $results['url'][] = "You've already added this endpoint";
         }
 
         $validation_errors = array_filter(array_values($results));
