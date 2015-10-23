@@ -147,7 +147,7 @@ class Rooftop_Webhooks_Admin_Admin {
      * Add the Webhooks admin interface
      *******/
     public function webhook_menu_links() {
-        $rooftop_webhook_menu_slug = "rooftop-api-authentication-overview";
+        $rooftop_webhook_menu_slug = "rooftop-overview";
         add_submenu_page($rooftop_webhook_menu_slug, "Webhooks", "Webhooks", "manage_options", $this->plugin_name."-overview", function() {
             if($_POST && array_key_exists('method', $_POST)) {
                 $method = strtoupper($_POST['method']);
