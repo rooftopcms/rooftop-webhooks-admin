@@ -105,46 +105,6 @@ class Rooftop_Webhooks_Admin_Admin {
 
 	}
 
-    public function trigger_webhook_save($post_id) {
-        $post = get_post($post_id);
-
-        if(in_array($post->post_status, array('auto-draft', 'draft', 'inherit')) && $post->post_date == $post->post_modified) {
-            return;
-        }
-
-        $webhook_request_body = array(
-            'id' => $post_id,
-            'type' => $post->post_type,
-            'status' => $post->post_status
-        );
-
-        $this->send_webhook_request($webhook_request_body);
-    }
-
-    public function trigger_webhook_delete($post_id) {
-        $post = get_post($post_id);
-
-        if(in_array($post->post_status, array('revision', 'inherit')) && $post->post_date == $post->post_modified) {
-            return;
-        }
-
-        $webhook_request_body = array(
-            'id' => $post_id,
-            'status' => 'deleted'
-        );
-
-        $this->send_webhook_request($webhook_request_body);
-    }
-
-    private function send_webhook_request($request_body) {
-        foreach($this->get_webhook_endpoints() as $endpoint) {
-            $args = array('endpoint' => $endpoint, 'body' => $request_body);
-
-            $args = apply_filters('prepare_webhook_payload', $args);
-            Resque::enqueue('default', 'PostSaved', $args);
-        }
-    }
-
     /*******
      * Add the Webhooks admin interface
      *******/
@@ -183,16 +143,26 @@ class Rooftop_Webhooks_Admin_Admin {
         });
     }
 
+    /**
+     * list all webhooks
+     */
     private function webhooks_admin_index() {
         $webhook_endpoints = $this->get_webhook_endpoints();
 
         require_once plugin_dir_path( __FILE__ ) . 'partials/rooftop-webhooks-admin-index.php';
     }
 
+    /**
+     * render the form
+     */
     private function webhooks_admin_form() {
         require_once plugin_dir_path( __FILE__ ) . 'partials/rooftop-webhooks-admin-new.php';
     }
 
+    /**
+     * render the edit/delete form
+     *
+     */
     private function webhooks_view_form() {
         $endpoint = $this->get_webhook_endpoint_with_id($_GET['id']);
 
@@ -204,7 +174,10 @@ class Rooftop_Webhooks_Admin_Admin {
         }
     }
 
-    private function webhook_create(){
+    /**
+     * Create a new webhook endpoint
+     */
+    private function webhook_create() {
         $endpoint = (object)array('url' => $_POST['url'], 'environment' => $_POST['environment']);
         $errors = null;
         if($this->validate($endpoint, $errors)) {
@@ -225,7 +198,10 @@ class Rooftop_Webhooks_Admin_Admin {
         }
     }
 
-    private function webhooks_update(){
+    /**
+     * Update a webhook in the existing collection
+     */
+    private function webhooks_update() {
         $all_endpoints = $this->get_webhook_endpoints();
         $endpoint = $this->get_webhook_endpoint_with_id($_POST['id']);
 
@@ -251,6 +227,12 @@ class Rooftop_Webhooks_Admin_Admin {
         }
     }
 
+    /**
+     * @param $id
+     *
+     * Remove a webhook if we find its ID in the stored webhooks
+     *
+     */
     private function webhook_delete($id) {
         $all_endpoints = $this->get_webhook_endpoints();
         $endpoint = $this->get_webhook_endpoint_with_id($id);
@@ -265,6 +247,13 @@ class Rooftop_Webhooks_Admin_Admin {
         }
     }
 
+    /**
+     * @param $id
+     * @return bool
+     *
+     * find a webhook by its ID
+     *
+     */
     private function get_webhook_endpoint_with_id($id) {
         $all_endpoints = $this->get_webhook_endpoints();
         $endpoints = array_filter($all_endpoints, function($endpoint) use($id){
@@ -278,26 +267,29 @@ class Rooftop_Webhooks_Admin_Admin {
         }
     }
 
+    /**
+     * @param $endpoint
+     * @param null $op
+     * @param null $errors
+     * @return bool
+     *
+     *
+     * validate the webhook can be saved. mutate &$errors with any validation errors and return a bool
+     */
     private function validate($endpoint, $op = null, &$errors = null) {
-        // fixme: validate the environment, url presence and that the url doesnt resolve to a local address
-        $results = array();
-
+        $validation_results = array('url' => [], 'environment' => []);
         $endpoints = $this->get_webhook_endpoints();
 
-        // validate the env
-        $results = [];
-        $results['url'] = [];
-        $results['environment'] = [];
         if(!strlen($endpoint->environment)>0){
-            $results['envirnment'][] = "No environment specified";
+            $validation_results['envirnment'][] = "No environment specified";
         }
         if(!strlen($endpoint->url)>0){
-            $results['url'][] = "No URL given";
+            $validation_results['url'][] = "No URL given";
         }
 
         $url = parse_url($endpoint->url);
         if(gethostbyname($url['host']) == "127.0.0.1"){
-            $results['url'][] = "URL Resolves to localhost";
+            $validation_results['url'][] = "URL Resolves to localhost";
         }
 
         $urls = array_map(function($e){
@@ -305,22 +297,33 @@ class Rooftop_Webhooks_Admin_Admin {
         }, $endpoints);
 
         if(in_array($endpoint->url, $urls) && $op != 'update'){
-            $results['url'][] = "You've already added this endpoint";
+            $validation_results['url'][] = "You've already added this endpoint";
         }
 
-        $validation_errors = array_filter(array_values($results));
+        $validation_errors = array_filter(array_values($validation_results));
         if(count($validation_errors)){
-            $errors = array_filter($results);
+            $errors = array_filter($validation_results);
             return false;
         }
 
         return true;
     }
 
+    /**
+     * @param $endpoints
+     *
+     * saves a JSON encoded array of endpoints
+     */
     private function set_webhook_endpoints($endpoints) {
         $this->redis->set($this->redis_key, json_encode($endpoints));
     }
 
+    /**
+     * @param null $environment
+     * @return array|mixed|object
+     *
+     * Fetch the webhook endpoints from redis and decode form json
+     */
     private function get_webhook_endpoints($environment=null) {
         $endpoints = json_decode($this->redis->get($this->redis_key));
         if(!is_array($endpoints)) {

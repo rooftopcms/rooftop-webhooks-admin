@@ -17,5 +17,9 @@
                 </tr>
             <?php endforeach;?>
         </table>
+    <?php else:?>
+        <p>
+            You haven't added any webhook endpoints yet. <a href="?page=rooftop-webhooks-admin-overview&new=true">Add a new endpoint</a>.
+        </p>
     <?php endif; ?>
 </div>
