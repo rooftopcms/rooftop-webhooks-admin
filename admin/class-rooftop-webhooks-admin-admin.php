@@ -139,6 +139,8 @@ class Rooftop_Webhooks_Admin_Admin {
     private function send_webhook_request($request_body) {
         foreach($this->get_webhook_endpoints() as $endpoint) {
             $args = array('endpoint' => $endpoint, 'body' => $request_body);
+
+            $args = apply_filters('prepare_webhook_payload', $args);
             Resque::enqueue('default', 'PostSaved', $args);
         }
     }
