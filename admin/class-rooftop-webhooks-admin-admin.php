@@ -60,6 +60,7 @@ class Rooftop_Webhooks_Admin_Admin {
             'scheme' => 'tcp',
             'host'   => REDIS_HOST,
             'port'   => REDIS_PORT,
+            'password' => REDIS_PASSWORD
         ] );
 	}
 
