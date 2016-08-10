@@ -15,22 +15,6 @@
                     <input type="text" name="url" size="50" value="<?php echo $url ?>"/>
                 </td>
             </tr>
-
-            <tr>
-                <th scope="row">
-                    Environment
-                </th>
-                <td>
-                    <p>
-                        <label for="webhook_mode_live">Live</label>
-                        <input name="environment" id="webhook_mode_live" value="live" type="radio" checked />
-                    </p>
-                    <p>
-                        <label for="webhook_mode_staging">Staging</label>
-                        <input name="environment" id="webhook_mode_staging" value="staging" type="radio" />
-                    </p>
-                </td>
-            </tr>
         </table>
 
         <?php wp_nonce_field( 'rooftop-webhook-admin', 'webhook-field-token' ); ?>

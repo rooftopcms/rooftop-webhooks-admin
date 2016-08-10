@@ -41,8 +41,6 @@ class Rooftop_Webhooks_Admin_Admin {
 	 */
 	private $version;
 
-    private $redis_key;
-
 	/**
 	 * Initialize the class and set its properties.
 	 *
@@ -55,13 +53,6 @@ class Rooftop_Webhooks_Admin_Admin {
 		$this->plugin_name = $plugin_name;
 		$this->version = $version;
 
-        $this->redis_key = 'site_id:'.get_current_blog_id().':webhooks';
-        $this->redis = new Predis\Client( [
-            'scheme' => 'tcp',
-            'host'   => REDIS_HOST,
-            'port'   => REDIS_PORT,
-            'password' => REDIS_PASSWORD
-        ] );
 	}
 
 	/**
@@ -183,10 +174,11 @@ class Rooftop_Webhooks_Admin_Admin {
      * Create a new webhook endpoint
      */
     private function webhook_create() {
-        $endpoint = (object)array('url' => $_POST['url'], 'environment' => $_POST['environment']);
+        $endpoint = (object)array('url' => $_POST['url']);
         $errors = null;
+
         if($this->validate($endpoint, $errors)) {
-            $endpoint->id = $this->redis->incr($this->redis_key.':id');
+            $endpoint->id = uniqid();
 
             $all_endpoints = $this->get_webhook_endpoints();
             $all_endpoints[] = $endpoint;
@@ -213,7 +205,6 @@ class Rooftop_Webhooks_Admin_Admin {
         if($endpoint) {
             $index = array_search($endpoint, $all_endpoints);
             $endpoint->url = $_POST['url'];
-            $endpoint->environment = $_POST['environment'];
 
             $errors = [];
             if($this->validate($endpoint, 'update', $errors)){
@@ -261,7 +252,7 @@ class Rooftop_Webhooks_Admin_Admin {
      */
     private function get_webhook_endpoint_with_id($id) {
         $all_endpoints = $this->get_webhook_endpoints();
-        $endpoints = array_filter($all_endpoints, function($endpoint) use($id){
+        $endpoints = array_filter($all_endpoints, function($endpoint) use($id) {
             return $endpoint->id == $id;
         });
 
@@ -282,12 +273,9 @@ class Rooftop_Webhooks_Admin_Admin {
      * validate the webhook can be saved. mutate &$errors with any validation errors and return a bool
      */
     private function validate($endpoint, $op = null, &$errors = null) {
-        $validation_results = array('url' => [], 'environment' => []);
+        $validation_results = array('url' => []);
         $endpoints = $this->get_webhook_endpoints();
 
-        if(!strlen($endpoint->environment)>0){
-            $validation_results['envirnment'][] = "No environment specified";
-        }
         if(!strlen($endpoint->url)>0){
             $validation_results['url'][] = "No URL given";
         }
@@ -320,25 +308,22 @@ class Rooftop_Webhooks_Admin_Admin {
      * saves a JSON encoded array of endpoints
      */
     private function set_webhook_endpoints($endpoints) {
-        $this->redis->set($this->redis_key, json_encode($endpoints));
+        update_blog_option( get_current_blog_id(), 'webhook_endpoints', $endpoints );
     }
 
     /**
-     * @param null $environment
      * @return array|mixed|object
      *
-     * Fetch the webhook endpoints from redis and decode form json
+     * Fetch the webhook endpoints from the blog options and return as an array of objects
      */
-    private function get_webhook_endpoints($environment=null) {
-        $endpoints = json_decode($this->redis->get($this->redis_key));
+    private function get_webhook_endpoints() {
+        $endpoints = get_blog_option( get_current_blog_id(), 'webhook_endpoints', array() );
+        $endpoints = array_map( function( $i ) {
+            return (object)$i;
+        }, $endpoints );
+
         if(!is_array($endpoints)) {
             return array();
-        }
-
-        if($environment){
-            $endpoints = array_filter($endpoints, function($e) use($environment) {
-                return $e->environment == $environment;
-            });
         }
 
         return $endpoints;
