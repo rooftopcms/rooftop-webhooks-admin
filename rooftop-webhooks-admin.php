@@ -16,7 +16,7 @@
  * Plugin Name:       Rooftop Webhooks Admin
  * Plugin URI:        http://errorstudio.co.uk
  * Description:       This is a short description of what the plugin does. It's displayed in the WordPress admin area.
- * Version:           1.0.0
+ * Version:           1.0.1
  * Author:            Error
  * Author URI:        https://www.rooftopcms.com
  * License:           GPL-2.0+

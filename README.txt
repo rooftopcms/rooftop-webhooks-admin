@@ -12,8 +12,8 @@ rooftop-webhooks-admin adds an admin interface to maintain a collection of webho
 == Description ==
 
 rooftop-webhooks-admin provides an admin UI for adding, editing and removing
-webhook URL which are stored in Redis.
-The companion plugins, rooftop-change-notifier and rooftop-queue-runner, push
+webhook urls.
+The companion plugin, rooftop-queue-runner, pushes
 events on to the queue and dispatch them to your endpoints respectively.
 
 == Installation ==
@@ -31,6 +31,12 @@ Otherwise you can install manually:
 = Can this be used without Rooftop CMS? =
 
 Yes, it's a Wordpress plugin you're welcome to use outside the context of Rooftop CMS. We haven't tested it, though.
+
+== Upgrading ==
+
+If upgrading from 1.0.0 to 1.0.1, you'll need to either:
+  * Re-add your webhook endpoints, or
+  * Run the migration script included in this plugin: php ~/path/to/wp-cli.phar eval-file admin/utils/redis-to-db.php
 
 == Changelog ==
 
