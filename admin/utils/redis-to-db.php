@@ -1,6 +1,6 @@
 <?php
 
-foreach(wp_get_sites() as $blog) {
+foreach(get_sites() as $blog) {
     $blog_id = $blog['blog_id'];
     switch_to_blog($blog_id);
 
