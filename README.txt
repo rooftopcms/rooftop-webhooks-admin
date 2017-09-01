@@ -1,13 +1,13 @@
-=== Plugin Name ===
+=== Rooftop Webhooks Admin ===
 Contributors: rooftopcms
 Tags: rooftop, api, headless, webhooks
 Requires at least: 4.3
-Tested up to: 4.3
+Tested up to: 4.8.1
 Stable tag: 4.3
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
-rooftop-webhooks-admin adds an admin interface to maintain a collection of webhook endpoints
+rooftop-webhooks-admin adds an admin interface to maintain a collection of webhook endpoints.
 
 == Description ==
 
@@ -34,14 +34,18 @@ Yes, it's a Wordpress plugin you're welcome to use outside the context of Roofto
 
 == Upgrading ==
 
-If upgrading from 1.0.0 to 1.0.1, you'll need to either:
+If upgrading from 1.0.0 to 1.0.1 (or later), you'll need to either:
   * Re-add your webhook endpoints, or
   * Run the migration script included in this plugin: php ~/path/to/wp-cli.phar eval-file admin/utils/redis-to-db.php
 
 == Changelog ==
 
-= 0.0.1 =
-* Initial release
+= 1.2.1 =
+* Tweak readme for packaging
+
+= 1.2.0 =
+* Remove deprecated call to wp_get_sites
+
 
 == What's Rooftop CMS? ==
 
