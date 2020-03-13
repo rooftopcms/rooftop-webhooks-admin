@@ -106,7 +106,7 @@ class Rooftop_Webhooks_Admin_Admin {
      *******/
     public function webhook_menu_links() {
         $rooftop_webhook_menu_slug = "rooftop-overview";
-        add_submenu_page($rooftop_webhook_menu_slug, "Webhooks", "Webhooks", "manage_options", $this->plugin_name."-overview", function() {
+        add_menu_page("Webhooks", "Webhooks", "manage_options", $this->plugin_name."-overview", function() {
             if($_POST && array_key_exists('method', $_POST)) {
                 $method = strtoupper($_POST['method']);
             }elseif($_POST && array_key_exists('id', $_POST)) {
@@ -184,7 +184,7 @@ class Rooftop_Webhooks_Admin_Admin {
             $all_endpoints[] = $endpoint;
             $this->set_webhook_endpoints($all_endpoints);
 
-            echo "<div class='wrap'>Webhook updated</div>";
+            $this->renderMessage("Webhook created", "created");
             $this->webhooks_admin_index();
         }else {
             echo "<div class='wrap'>New endpoint not valid</div>";
@@ -211,7 +211,7 @@ class Rooftop_Webhooks_Admin_Admin {
                 $all_endpoints[$index] = $endpoint;
                 $this->set_webhook_endpoints($all_endpoints);
 
-                echo "<div class='wrap'>Webhook updated</div>";
+                $this->renderMessage("Webhook updated", "updated");
                 $this->webhooks_admin_index();
             }else {
                 echo "<div class='wrap'>Endpoint not saved</div>";
@@ -222,7 +222,7 @@ class Rooftop_Webhooks_Admin_Admin {
             }
         }
     }
-
+    
     /**
      * @param $id
      *
@@ -232,17 +232,23 @@ class Rooftop_Webhooks_Admin_Admin {
     private function webhook_delete($id) {
         $all_endpoints = $this->get_webhook_endpoints();
         $endpoint = $this->get_webhook_endpoint_with_id($id);
-
+        
         if($endpoint) {
             $index = array_search($endpoint, $all_endpoints);
             unset($all_endpoints[$index]);
             $this->set_webhook_endpoints(array_values($all_endpoints));
-
-            echo "Webhook deleted";
+            
+            $this->renderMessage("Webhook deleted", "deleted");
             $this->webhooks_admin_index();
         }
     }
 
+    private function renderMessage($message, $messageType) {
+        echo "<div id='message' class='${messageType} notice is-dismissible'>";
+        echo "    <p><strong>${message}</strong></p>";
+        echo "<button type='button' class='notice-dismiss'><span class='screen-reader-text'>Dismiss this notice.</span></button></div>";
+    }
+    
     /**
      * @param $id
      * @return bool
@@ -308,7 +314,7 @@ class Rooftop_Webhooks_Admin_Admin {
      * saves a JSON encoded array of endpoints
      */
     private function set_webhook_endpoints($endpoints) {
-        update_blog_option( get_current_blog_id(), 'webhook_endpoints', $endpoints );
+        update_option( 'webhook_endpoints', $endpoints );
     }
 
     /**
@@ -317,7 +323,7 @@ class Rooftop_Webhooks_Admin_Admin {
      * Fetch the webhook endpoints from the blog options and return as an array of objects
      */
     private function get_webhook_endpoints() {
-        $endpoints = get_blog_option( get_current_blog_id(), 'webhook_endpoints', array() );
+        $endpoints = get_option( 'webhook_endpoints', array() );
         $endpoints = array_map( function( $i ) {
             return (object)$i;
         }, $endpoints );
