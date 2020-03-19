@@ -184,7 +184,7 @@ class Rooftop_Webhooks_Admin_Admin {
             $all_endpoints[] = $endpoint;
             $this->set_webhook_endpoints($all_endpoints);
 
-            $this->renderMessage("Webhook created", "created");
+            $this->renderMessage("Webhook created", "success");
             $this->webhooks_admin_index();
         }else {
             echo "<div class='wrap'>New endpoint not valid</div>";
@@ -211,7 +211,7 @@ class Rooftop_Webhooks_Admin_Admin {
                 $all_endpoints[$index] = $endpoint;
                 $this->set_webhook_endpoints($all_endpoints);
 
-                $this->renderMessage("Webhook updated", "updated");
+                $this->renderMessage("Webhook updated", "success");
                 $this->webhooks_admin_index();
             }else {
                 echo "<div class='wrap'>Endpoint not saved</div>";
