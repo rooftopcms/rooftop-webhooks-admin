@@ -201,7 +201,6 @@ class Rooftop_Webhooks_Admin_Admin {
     private function webhooks_update() {
         $all_endpoints = $this->get_webhook_endpoints();
         $endpoint = $this->get_webhook_endpoint_with_id($_POST['id']);
-
         if($endpoint) {
             $index = array_search($endpoint, $all_endpoints);
             $endpoint->url = $_POST['url'];
@@ -333,5 +332,59 @@ class Rooftop_Webhooks_Admin_Admin {
         }
 
         return $endpoints;
+    }
+
+    public function post_webhook( $post_id ) {
+        $post = get_post($post_id);
+
+        $request_body = array(
+            'id' => $post_id,
+            'type' => $post->post_type
+        );
+
+        $request_body = apply_filters( 'prepare_'.$post->post_status.'_webhook_payload', $request_body );
+
+        $this->queueJob( $request_body );
+    }
+
+    public function menu_webhook( $menu_id ) {
+        $request_body = array(
+            'id' => $menu_id,
+            'type' => 'menu'
+        );
+
+        $request_body = apply_filters( 'prepare_term_webhook_payload', $request_body );
+
+        $this->queueJob( $request_body );
+    }
+
+    public function term_webhook( $term_id ) {
+        $request_body = array(
+            'id' => $term_id,
+            'type' => 'taxonomy'
+        );
+
+        $request_body = apply_filters( 'prepare_term_webhook_payload', $request_body );
+
+        $this->queueJob( $request_body );
+    }
+
+    // Todo: pass this onto a queue service. 
+    private function queueJob( $payload ) {
+        $all_endpoints = $this->get_webhook_endpoints();
+        
+        foreach( $all_endpoints as $endpoint ) {
+            try {
+                $ch = curl_init( $endpoint->url );
+                curl_setopt($ch, CURLOPT_POST, 1);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 1);
+                curl_setopt($ch, CURLOPT_TIMEOUT, 3);
+                curl_exec($ch);
+                $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            }catch (Exception $e) {
+            }
+        }
     }
 }
